@@ -1,0 +1,175 @@
+       ID DIVISION.                                                     00010000
+       PROGRAM-ID. CASESTUD.                                            00020000
+       ENVIRONMENT DIVISION.                                            00030001
+       INPUT-OUTPUT SECTION.                                            00040001
+       FILE-CONTROL.                                                    00050001
+      ***************SALES TRANSACTION FILE*************************    00051061
+           SELECT STR ASSIGN TO DD1                                     00060001
+           FILE STATUS IS FS1.                                          00070001
+      **************MASTER FILE*************************************    00071061
+           SELECT MS ASSIGN TO DD2                                      00080001
+           ORGANIZATION IS INDEXED                                      00090001
+           ACCESS MODE IS DYNAMIC                                       00100033
+           RECORD KEY IS PET-ID OF MASTER                               00110003
+      *    ALTERNATE KEY IS PET-TYPE OF MASTER                          00111078
+           FILE STATUS IS FS2.                                          00120001
+      ***************PROCESS TRANSACTION FILE***********************    00121061
+           SELECT PTR ASSIGN TO AS-DD3                                  00130001
+           FILE STATUS IS FS3.                                          00140001
+      **************PENDING TRANSACTIONS FILE***********************    00140161
+           SELECT UTR ASSIGN TO DD4                                     00141007
+           FILE STATUS IS FS4.                                          00142007
+      **************************************************************    00143061
+       DATA DIVISION.                                                   00150001
+       FILE SECTION.                                                    00160001
+      ******************SALE TRANSACTION FILE STRUCTURE*************    00161061
+       FD STR.                                                          00170003
+       COPY STR2051.                                                    00171082
+      *01 SALE.                                                         00180082
+      *   05 PET-ID        PIC X(3).                                    00190082
+      *   05 MRP           PIC 9999V99.                                 00200082
+      *   05 QUANTITY      PIC 9(2).                                    00210082
+      *   05 FILER         PIC X(69).                                   00220082
+      *****************MASTER FILE STRUCTURE************************    00221061
+       FD MS.                                                           00230003
+       COPY MS2051.                                                     00231082
+      *01 MASTER.                                                       00240082
+      *   05 PET-ID        PIC X(3).                                    00250082
+      *   05 PET-TYPE      PIC X.                                       00260082
+      *      88 CAT                     VALUE '1'.                      00270082
+      *      88 DOG                     VALUE '2'.                      00280082
+      *      88 BIRD                    VALUE '3'.                      00290082
+      *      88 FISH                    VALUE '4'.                      00300082
+      *   05 BREED         PIC A(10).                                   00310082
+      *   05 DOP           PIC 9(6).                                    00320082
+      *   05 CP            PIC 9999V99.                                 00330082
+      *   05 QUANTITY      PIC 9(2).                                    00340082
+      *   05 FILER         PIC X(52).                                   00350082
+      **********PROCESS TRANSACTION FILE STRUCTURE******************    00351061
+       FD PTR.                                                          00360003
+       COPY PTR2051.                                                    00361082
+      *01 PROCESS.                                                      00370082
+      *   05 PET-ID        PIC X(3).                                    00380082
+      *   05 DOP           PIC 9(6).                                    00390082
+      *   05 QUANTITY      PIC 9(2).                                    00400082
+      *   05 TP            PIC 99999V99.                                00410082
+      *   05 PROFIT-LOSS   PIC S9999V99.                                00420082
+      *   05 FILER         PIC X(56).                                   00430082
+      ************PEND TRANSACTION FILE STRUCTURE********************   00430161
+       FD UTR.                                                          00431007
+       COPY UTR2051.                                                    00431182
+      *01 UNPROCESS.                                                    00432082
+      *   05 PET-ID        PIC XXX.                                     00433082
+      *   05 MRP           PIC 9999V99.                                 00434082
+      *   05 QUANTITY      PIC 9(2).                                    00435082
+      *   05 REMARKS       PIC X(30).                                   00435182
+      *   05 FILER         PIC X(39).                                   00436082
+       WORKING-STORAGE SECTION.                                         00440001
+       77 FS1              PIC XX.                                      00450001
+       77 FS2              PIC XX.                                      00460001
+       77 FS3              PIC XX.                                      00470001
+       77 FS4              PIC XX.                                      00471008
+       77 TEMPREC          PIC 99999V99.                                00480001
+       77 TEMPREC2         PIC S9999V99.                                00490003
+       77 TEMPREC3         PIC 9(2).                                    00500003
+       77 TEMPREC4         PIC S99999V99.                               00501076
+       77 TEMPREC5         PIC 9(6).                                    00502056
+       77 TEMPREC6         PIC 9(6).                                    00503056
+       PROCEDURE DIVISION.                                              00510001
+      **MAIN-PARA IS USED TO START EXECUTION OF CODE****************    00511061
+       MAIN-PARA.                                                       00520001
+            PERFORM OPEN-PARA                                           00530015
+            STOP RUN.                                                   00540001
+      **OPEN-PARA PERFORM SORT PROGRAM AND OPENS FILES**************    00541061
+       OPEN-PARA.                                                       00550001
+            CALL 'SORTPGM'                                              00551051
+            OPEN INPUT STR                                              00560001
+            OPEN I-O MS                                                 00570002
+            OPEN OUTPUT PTR                                             00580050
+                DISPLAY "OPEN STATUS : " FS3                            00590065
+            OPEN OUTPUT UTR                                             00611007
+                 IF FS1 = 00                                            00620001
+                    DISPLAY "OPEN STATUS : " FS1                        00621016
+                    PERFORM READ-PARA UNTIL FS1 NOT = 00                00630039
+                 ELSE                                                   00640001
+                    DISPLAY "SALE TRANSACTIONS FILE OPEN UNSUCESSFUL"   00650001
+                    FS1                                                 00660001
+                 END-IF                                                 00670001
+            CLOSE STR                                                   00680066
+            CLOSE MS                                                    00681066
+            CLOSE PTR                                                   00682066
+            CLOSE UTR                                                   00683083
+            CALL 'REPRT'.                                               00683183
+      **READ-PARA PERFORMS READ AND CHECKS FOR VALID INPUT**********    00684061
+       READ-PARA.                                                       00690001
+            READ STR                                                    00700024
+            AT END DISPLAY " ALL SALES ARE PROCESSED"                   00701047
+            NOT AT END                                                  00702047
+            DISPLAY "HI"                                                00703069
+            MOVE PET-ID OF SALE TO PET-ID OF MASTER                     00720043
+            READ MS                                                     00721047
+            KEY IS PET-ID OF MASTER                                     00721247
+            INVALID KEY                                                 00721447
+                     PERFORM PEND-PARA1                                 00722055
+            NOT INVALID KEY                                             00723047
+            IF QUANTITY OF SALE IS NUMERIC                              00724059
+               IF (QUANTITY OF SALE) <= QUANTITY OF MASTER              00724159
+                   IF MRP OF SALE IS NUMERIC                            00724259
+                     DISPLAY "HI"                                       00724368
+                     PERFORM WRITE-PARA                                 00724460
+                     DISPLAY "FILE STATUS:" FS3                         00724567
+                     PERFORM UPDATE-PARA                                00725059
+                     ELSE                                               00770001
+                        PERFORM PEND-PARA3                              00780059
+                     END-IF                                             00790040
+                 ELSE                                                   00800059
+                     PERFORM PEND-PARA2                                 00800159
+                     END-IF                                             00800259
+                 ELSE                                                   00800359
+                     PERFORM PEND-PARA3                                 00800459
+                     END-IF                                             00800559
+            END-READ                                                    00801047
+            END-READ.                                                   00802081
+      **WRITE-PARA PERFORMS WRITE OP IN PROCESS TRANSACTIONS FILE***    00803061
+       WRITE-PARA.                                                      00810001
+            MOVE PET-ID OF SALE TO PET-ID OF PROCESS                    00820001
+            ACCEPT DOP OF PROCESS FROM DATE                             00830004
+            MOVE QUANTITY OF SALE TO QUANTITY OF PROCESS                00840001
+            COMPUTE TEMPREC = (QUANTITY OF SALE) * (MRP OF SALE)        00850002
+            MOVE TEMPREC TO TP OF PROCESS                               00860001
+            IF (MRP OF SALE) >= (CP OF MASTER)                          00870002
+                COMPUTE TEMPREC2 = (MRP OF SALE) - (CP OF MASTER)       00880003
+            ELSE                                                        00890063
+                COMPUTE TEMPREC2 = (MRP OF SALE) - (CP OF MASTER)       00900063
+            END-IF                                                      00910002
+            COMPUTE TEMPREC4 = TEMPREC2 * QUANTITY OF SALE              00911010
+            MOVE TEMPREC4 TO PROFIT-LOSS OF PROCESS                     00920011
+            WRITE PROCESS                                               00930054
+            DISPLAY "WRITE STATUS" FS2.                                 00931054
+      **UPDATE-PARA PERFORM OP THAT UPDATES THE MASTER FILE QUANTITY*   00932061
+       UPDATE-PARA.                                                     00940007
+            MOVE PET-ID OF SALE TO PET-ID OF MASTER                     00941007
+            COMPUTE TEMPREC3 = (QUANTITY OF MASTER) - (QUANTITY OF SALE)00950007
+            MOVE TEMPREC3 TO QUANTITY OF MASTER.                        00960007
+            REWRITE MASTER.                                             00961007
+      **PEND-PARA1 ADDS REMARK OF INVALID KEY TO PEND RECORD*********   00962061
+       PEND-PARA1.                                                      00970055
+            MOVE PET-ID OF SALE TO PET-ID OF UNPROCESS                  00980007
+            MOVE MRP OF SALE TO MRP OF UNPROCESS                        00990007
+            MOVE QUANTITY OF SALE TO QUANTITY OF UNPROCESS              01000007
+            MOVE 'INVALID KEY' TO REMARKS OF UNPROCESS                  01001055
+            WRITE UNPROCESS.                                            01010007
+      **PEND-PARA2 ADDS REMARK OF UNSUFFICIENT STOCK TO PEND RECORD**   01011061
+       PEND-PARA2.                                                      01020055
+            MOVE PET-ID OF SALE TO PET-ID OF UNPROCESS                  01030055
+            MOVE MRP OF SALE TO MRP OF UNPROCESS                        01040055
+            MOVE QUANTITY OF SALE TO QUANTITY OF UNPROCESS              01050055
+            MOVE 'UNSUFFICIENT STOCK' TO REMARKS OF UNPROCESS           01060055
+            WRITE UNPROCESS.                                            01070055
+      **PEND-PARA3 ADDS REMARK OF NONNUMERIC TO PEND RECORD**********   01071061
+       PEND-PARA3.                                                      01080056
+            MOVE PET-ID OF SALE TO PET-ID OF UNPROCESS                  01090056
+            MOVE MRP OF SALE TO MRP OF UNPROCESS                        01100056
+            MOVE QUANTITY OF SALE TO QUANTITY OF UNPROCESS              01110056
+            MOVE 'NONNUMERIC INPUT ' TO REMARKS OF UNPROCESS            01120056
+            WRITE UNPROCESS.                                            01130056

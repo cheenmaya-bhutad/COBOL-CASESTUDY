@@ -1,0 +1,28 @@
+       ID DIVISION.                                                     00010000
+       PROGRAM-ID. SORTPGM.                                             00020000
+       ENVIRONMENT DIVISION.                                            00030000
+       INPUT-OUTPUT SECTION.                                            00040000
+       FILE-CONTROL.                                                    00050000
+           SELECT STR ASSIGN TO DD1.                                    00070006
+           SELECT SORT-FILE ASSIGN TO SORTWK01.                         00080004
+       DATA DIVISION.                                                   00081002
+       FILE SECTION.                                                    00082002
+       FD STR.                                                          00110004
+       01 OUTREC              PIC X(80).                                00120000
+       SD SORT-FILE.                                                    00130004
+       01 SORTREC .                                                     00140001
+           05 PET-ID        PIC X(03).                                  00150004
+           05 MRP           PIC 9999V99.                                00160004
+           05 QUANTITY      PIC 9(2).                                   00170004
+           05 FILER         PIC X(69).                                  00171004
+       PROCEDURE DIVISION.                                              00180000
+       MAIN-PARA.                                                       00190000
+           DISPLAY "FILE SORTING..."                                    00200000
+           DISPLAY "SECOND LINE...."                                    00210000
+           SORT SORT-FILE                                               00211004
+           ASCENDING KEY PET-ID                                         00220004
+           USING STR  GIVING STR                                        00230005
+           IF SORT-RETURN IS NOT = 0                                    00240000
+              DISPLAY "SORT-RETURN " SORT-RETURN                        00250000
+           END-IF                                                       00260000
+           EXIT PROGRAM.                                                00270004
